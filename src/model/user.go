@@ -1,6 +1,7 @@
 package model
 
 import (
+	"devbook-api/src/security"
 	"fmt"
 	"strings"
 	"time"
@@ -22,7 +23,9 @@ func (user *User) Prepare() error {
 		return error
 	}
 
-	user.sanitize()
+	if error := user.sanitize(); error != nil {
+		return error
+	}
 
 	return nil
 }
@@ -57,8 +60,17 @@ func (user *User) validate() error {
 	return fmt.Errorf("constraint violations on user: [%s]", strings.Join(validations, ","))
 }
 
-func (user *User) sanitize() {
+func (user *User) sanitize() error {
 	user.Name = strings.TrimSpace(user.Name)
 	user.Nick = strings.TrimSpace(user.Nick)
 	user.Email = strings.TrimSpace(user.Email)
+
+	passwordHash, error := security.Hash(user.Password)
+	if error != nil {
+		return error
+	}
+
+	user.Password = string(passwordHash)
+
+	return nil
 }

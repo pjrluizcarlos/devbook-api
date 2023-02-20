@@ -11,17 +11,19 @@ import (
 
 var (
 	ConnectionString = ""
-	Port = 0
+	Port             = 0
 )
 
 func Load() {
 	fmt.Println("Environment variables load started.")
 
-	error := godotenv.Load(); if error != nil {
+	error := godotenv.Load()
+	if error != nil {
 		log.Fatal(error)
 	}
 
-	Port, error = strconv.Atoi(os.Getenv("SERVER_PORT")); if error != nil {
+	Port, error = strconv.Atoi(os.Getenv("SERVER_PORT"))
+	if error != nil {
 		log.Fatal(error)
 	}
 

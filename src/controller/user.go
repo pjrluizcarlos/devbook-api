@@ -7,7 +7,6 @@ import (
 	"devbook-api/src/response"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"strconv"
 
@@ -155,7 +154,7 @@ func UpdateUserByID(w http.ResponseWriter, r *http.Request) {
 }
 
 func requestBody(r *http.Request) (model.User, error) {
-	requestBody, error := io.ReadAll(r.Body)
+	requestBody, error := requestBodyToString(r)
 	if error != nil {
 		return model.User{}, error
 	}

@@ -95,8 +95,6 @@ func (r User) FindById(id uint64) (model.User, error) {
 		if error = scan(rows, &user); error != nil {
 			return model.User{}, error
 		}
-	} else {
-		return model.User{}, nil
 	}
 
 	return user, nil
@@ -114,6 +112,24 @@ func (r User) DeleteById(id uint64) error {
 	}
 
 	return nil
+}
+
+func (r User) FindByEmail(email string) (model.User, error) {
+	rows, error := r.db.Query("select password from user where email = ?", email)
+	if error != nil {
+		return model.User{}, error
+	}
+	defer rows.Close()
+
+	var user model.User
+
+	if rows.Next() {
+		if error = rows.Scan(&user.Password); error != nil {
+			return model.User{}, error
+		}
+	}
+
+	return user, nil
 }
 
 func scan(rows *sql.Rows, user *model.User) error {

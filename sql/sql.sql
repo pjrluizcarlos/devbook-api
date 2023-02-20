@@ -6,7 +6,7 @@ CREATE TABLE user (
     name varchar(50) not null, 
     nick varchar(50) not null unique,
     email varchar(50) not null unique, 
-    password varchar(20) not null, 
+    password varchar(200) not null, 
     created_at timestamp default current_timestamp()  
 ) ENGINE=INNODB;
 CREATE USER IF NOT EXISTS 'devbookapi'@'localhost' IDENTIFIED BY 'devbookapi';
