@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 	"time"
+
+	"github.com/badoux/checkmail"
 )
 
 type User struct {
@@ -38,6 +40,10 @@ func (user *User) validate() error {
 
 	if strings.TrimSpace(user.Email) == "" {
 		validations = append(validations, "User email cannot be blank")
+	}
+
+	if error := checkmail.ValidateFormat(user.Email); error != nil {
+		validations = append(validations, "User email cannot have invalid format")
 	}
 
 	if strings.TrimSpace(user.Password) == "" {
