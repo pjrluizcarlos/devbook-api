@@ -15,6 +15,8 @@ import (
 )
 
 func FindAllUsers(w http.ResponseWriter, r *http.Request) {
+	nameOrNick := r.URL.Query().Get("user")
+
 	db, error := database.Connect()
 	if error != nil {
 		response.Error(w, http.StatusInternalServerError, error)
@@ -22,13 +24,13 @@ func FindAllUsers(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	users, error := repository.NewUser(db).FindAll()
+	users, error := repository.NewUserRepository(db).FindAll(nameOrNick)
 	if error != nil {
 		response.Error(w, http.StatusInternalServerError, error)
 		return
 	}
 
-	response.JSON(w, http.StatusCreated, users)
+	response.JSON(w, http.StatusOK, users)
 }
 
 func FindUserByID(w http.ResponseWriter, r *http.Request) {
@@ -37,6 +39,7 @@ func FindUserByID(w http.ResponseWriter, r *http.Request) {
 	id, error := strconv.ParseUint(parameters["id"], 10, 64)
 	if error != nil {
 		response.Error(w, http.StatusBadRequest, error)
+		return
 	}
 
 	db, error := database.Connect()
@@ -46,14 +49,14 @@ func FindUserByID(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	user, error := repository.NewUser(db).FindById(id)
+	user, error := repository.NewUserRepository(db).FindById(id)
 	if error != nil {
 		response.Error(w, http.StatusInternalServerError, error)
 		return
 	}
 
 	if user.Id == 0 {
-		response.Error(w, http.StatusNotFound, fmt.Errorf("User not found with ID [%d]", id))
+		response.Error(w, http.StatusNotFound, fmt.Errorf("user not found with ID [%d]", id))
 		return
 	}
 
@@ -61,7 +64,27 @@ func FindUserByID(w http.ResponseWriter, r *http.Request) {
 }
 
 func DeleteUserByID(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("DeleteUserByID"))
+	parameters := mux.Vars(r)
+
+	id, error := strconv.ParseUint(parameters["id"], 10, 64)
+	if error != nil {
+		response.Error(w, http.StatusBadRequest, error)
+		return
+	}
+
+	db, error := database.Connect()
+	if error != nil {
+		response.Error(w, http.StatusInternalServerError, error)
+		return
+	}
+	defer db.Close()
+
+	if error = repository.NewUserRepository(db).DeleteById(id); error != nil {
+		response.Error(w, http.StatusInternalServerError, error)
+		return
+	}
+
+	response.JSON(w, http.StatusNoContent, nil)
 }
 
 func CreateUser(w http.ResponseWriter, r *http.Request) {
@@ -71,6 +94,11 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if error := user.Prepare(); error != nil {
+		response.Error(w, http.StatusUnprocessableEntity, error)
+		return
+	}
+
 	db, error := database.Connect()
 	if error != nil {
 		response.Error(w, http.StatusInternalServerError, error)
@@ -78,7 +106,7 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	newId, error := repository.NewUser(db).Create(user)
+	newId, error := repository.NewUserRepository(db).Create(user)
 	if error != nil {
 		response.Error(w, http.StatusInternalServerError, error)
 		return
@@ -90,7 +118,40 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func UpdateUserByID(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("UpdateUser"))
+	user, error := requestBody(r)
+	if error != nil {
+		response.Error(w, http.StatusBadRequest, error)
+		return
+	}
+
+	if error := user.Prepare(); error != nil {
+		response.Error(w, http.StatusUnprocessableEntity, error)
+		return
+	}
+
+	parameters := mux.Vars(r)
+
+	id, error := strconv.ParseUint(parameters["id"], 10, 64)
+	if error != nil {
+		response.Error(w, http.StatusBadRequest, error)
+		return
+	}
+
+	user.Id = id
+
+	db, error := database.Connect()
+	if error != nil {
+		response.Error(w, http.StatusInternalServerError, error)
+		return
+	}
+	defer db.Close()
+
+	if error := repository.NewUserRepository(db).Update(user); error != nil {
+		response.Error(w, http.StatusInternalServerError, error)
+		return
+	}
+
+	response.JSON(w, http.StatusNoContent, nil)
 }
 
 func requestBody(r *http.Request) (model.User, error) {
