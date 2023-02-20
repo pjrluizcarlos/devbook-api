@@ -1,7 +1,7 @@
-package routes
+package route
 
 import (
-	"api/src/controllers"
+	"devbook-api/src/controller"
 	"net/http"
 )
 
@@ -12,31 +12,31 @@ var userRoutes = []Route{
 	{
 		URI:             userResource,
 		Method:          http.MethodGet,
-		Handler:         controllers.FindAllUsers,
+		Handler:         controller.FindAllUsers,
 		IsAuthenticated: false,
 	},
 	{
 		URI:             userResourceByID,
 		Method:          http.MethodGet,
-		Handler:         controllers.FindUserByID,
+		Handler:         controller.FindUserByID,
 		IsAuthenticated: false,
 	},
 	{
 		URI:             userResource,
 		Method:          http.MethodPost,
-		Handler:         controllers.CreateUser,
+		Handler:         controller.CreateUser,
 		IsAuthenticated: false,
 	},
 	{
 		URI:             userResourceByID,
 		Method:          http.MethodDelete,
-		Handler:         controllers.DeleteUserByID,
+		Handler:         controller.DeleteUserByID,
 		IsAuthenticated: false,
 	},
 	{
 		URI:             userResourceByID,
 		Method:          http.MethodPut,
-		Handler:         controllers.UpdateUserByID,
+		Handler:         controller.UpdateUserByID,
 		IsAuthenticated: false,
 	},
 }
