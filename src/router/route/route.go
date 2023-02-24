@@ -1,6 +1,7 @@
 package route
 
 import (
+	"devbook-api/src/middleware"
 	"fmt"
 	"net/http"
 
@@ -20,7 +21,16 @@ func AddRoutes(r *mux.Router) *mux.Router {
 	fmt.Println("Routes creation started.")
 
 	for _, route := range routes {
-		r.HandleFunc(route.URI, route.Handler).Methods(route.Method)
+		var handlerFunc http.HandlerFunc
+
+		if route.IsAuthenticated {
+			handlerFunc = middleware.Authenticate(route.Handler)
+		} else {
+			handlerFunc = route.Handler
+		}
+
+		r.HandleFunc(route.URI, handlerFunc).Methods(route.Method)
+
 		fmt.Printf("Route [%s]	%s created.\n", route.Method, route.URI)
 	}
 

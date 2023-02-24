@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"devbook-api/src/auth"
 	"devbook-api/src/database"
 	"devbook-api/src/repository"
 	"devbook-api/src/response"
@@ -33,5 +34,11 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response.JSON(w, http.StatusNoContent, nil)
+	token, error := auth.GetToken(userFound.Id)
+	if error != nil {
+		response.Error(w, http.StatusInternalServerError, error)
+		return
+	}
+
+	response.JSON(w, http.StatusOK, token)
 }

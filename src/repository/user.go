@@ -115,7 +115,7 @@ func (r User) DeleteById(id uint64) error {
 }
 
 func (r User) FindByEmail(email string) (model.User, error) {
-	rows, error := r.db.Query("select password from user where email = ?", email)
+	rows, error := r.db.Query("select id, password from user where email = ?", email)
 	if error != nil {
 		return model.User{}, error
 	}
@@ -124,7 +124,7 @@ func (r User) FindByEmail(email string) (model.User, error) {
 	var user model.User
 
 	if rows.Next() {
-		if error = rows.Scan(&user.Password); error != nil {
+		if error = rows.Scan(&user.Id, &user.Password); error != nil {
 			return model.User{}, error
 		}
 	}
