@@ -21,20 +21,23 @@ func AddRoutes(r *mux.Router) *mux.Router {
 	fmt.Println("Routes creation started.")
 
 	for _, route := range routes {
-		var handlerFunc http.HandlerFunc
-
-		if route.IsAuthenticated {
-			handlerFunc = middleware.Authenticate(route.Handler)
-		} else {
-			handlerFunc = route.Handler
-		}
-
-		r.HandleFunc(route.URI, handlerFunc).Methods(route.Method)
-
-		fmt.Printf("Route [%s]	%s created.\n", route.Method, route.URI)
+		addRoute(r, route)
 	}
 
 	fmt.Println("Routes creation completed.")
 
 	return r
+}
+
+func addRoute(r *mux.Router, route Route) {
+	r.HandleFunc(route.URI, getHandleFunc(route)).Methods(route.Method)
+	fmt.Printf("Route [%s]	%s added.\n", route.Method, route.URI)
+}
+
+func getHandleFunc(route Route) http.HandlerFunc {
+	if route.IsAuthenticated {
+		return middleware.Authenticate(route.Handler)
+	}
+
+	return route.Handler
 }
