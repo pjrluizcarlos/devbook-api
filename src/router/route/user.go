@@ -13,13 +13,13 @@ var userRoutes = []Route{
 		URI:             userResource,
 		Method:          http.MethodGet,
 		Handler:         controller.FindAllUsers,
-		IsAuthenticated: false,
+		IsAuthenticated: true,
 	},
 	{
 		URI:             userResourceByID,
 		Method:          http.MethodGet,
 		Handler:         controller.FindUserByID,
-		IsAuthenticated: false,
+		IsAuthenticated: true,
 	},
 	{
 		URI:             userResource,
@@ -31,12 +31,18 @@ var userRoutes = []Route{
 		URI:             userResourceByID,
 		Method:          http.MethodDelete,
 		Handler:         controller.DeleteUserByID,
-		IsAuthenticated: false,
+		IsAuthenticated: true,
 	},
 	{
 		URI:             userResourceByID,
 		Method:          http.MethodPut,
 		Handler:         controller.UpdateUserByID,
-		IsAuthenticated: false,
+		IsAuthenticated: true,
+	},
+	{
+		URI:             userResourceByID + "/follow",
+		Method:          http.MethodPost,
+		Handler:         controller.FollowUser,
+		IsAuthenticated: true,
 	},
 }

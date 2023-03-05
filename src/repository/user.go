@@ -132,6 +132,20 @@ func (r User) FindByEmail(email string) (model.User, error) {
 	return user, nil
 }
 
+func (r User) Follow(followed_id uint64, follower_id uint64) error {
+	statement, error := r.db.Prepare("insert ignore into follower (user_id, follower_id) values (?, ?)")
+	if error != nil {
+		return error
+	}
+	defer statement.Close()
+
+	if _, error = statement.Exec(followed_id, follower_id); error != nil {
+		return error
+	}
+
+	return nil
+}
+
 func scan(rows *sql.Rows, user *model.User) error {
 	return rows.Scan(&user.Id, &user.Name, &user.Nick, &user.Email, &user.Password, &user.CreatedAt)
 }
