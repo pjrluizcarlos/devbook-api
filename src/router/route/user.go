@@ -57,4 +57,10 @@ var userRoutes = []Route{
 		Handler:         controller.FindAllFollowersById,
 		IsAuthenticated: true,
 	},
+	{
+		URI:             userResourceByID + "/following",
+		Method:          http.MethodGet,
+		Handler:         controller.FindAllFollowingById,
+		IsAuthenticated: true,
+	},
 }

@@ -245,6 +245,29 @@ func FindAllFollowersById(w http.ResponseWriter, r *http.Request) {
 	response.JSON(w, http.StatusOK, followers)
 }
 
+func FindAllFollowingById(w http.ResponseWriter, r *http.Request) {
+	id, error := NewPathVariable(r).uint64("id")
+	if error != nil {
+		response.Error(w, http.StatusBadRequest, error)
+		return
+	}
+
+	db, error := database.Connect()
+	if error != nil {
+		response.Error(w, http.StatusInternalServerError, error)
+		return
+	}
+	defer db.Close()
+
+	following, error := repository.NewUserRepository(db).FindAllFollowingById(id)
+	if error != nil {
+		response.Error(w, http.StatusInternalServerError, error)
+		return
+	}
+
+	response.JSON(w, http.StatusOK, following)
+}
+
 func isSameUserFromAuthorization(userId uint64, r *http.Request) error {
 	tokenUserId, error := auth.GetUserId(GetAuthorizationHeader(r))
 	if error != nil {

@@ -165,6 +165,29 @@ func (r User) FindAllFollowersById(userId uint64) ([]model.User, error) {
 	if error != nil {
 		return nil, error
 	}
+	defer rows.Close()
+
+	var users []model.User
+
+	for rows.Next() {
+		var user model.User
+
+		if error := rows.Scan(&user.Id, &user.Name, &user.Nick, &user.Email, &user.Password, &user.CreatedAt); error != nil {
+			return nil, error
+		}
+
+		users = append(users, user)
+	}
+
+	return users, nil
+}
+
+func (r User) FindAllFollowingById(userId uint64) ([]model.User, error) {
+	rows, error := r.db.Query("select u.id, u.name, u.nick, u.email, u.password, u.created_at from follower f inner join user u on (f.user_id = u.id) where f.follower_id = ?", userId)
+	if error != nil {
+		return nil, error
+	}
+	defer rows.Close()
 
 	var users []model.User
 
