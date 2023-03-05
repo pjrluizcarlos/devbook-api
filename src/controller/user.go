@@ -10,9 +10,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"strconv"
-
-	"github.com/gorilla/mux"
 )
 
 func FindAllUsers(w http.ResponseWriter, r *http.Request) {
@@ -35,9 +32,7 @@ func FindAllUsers(w http.ResponseWriter, r *http.Request) {
 }
 
 func FindUserByID(w http.ResponseWriter, r *http.Request) {
-	parameters := mux.Vars(r)
-
-	id, error := strconv.ParseUint(parameters["id"], 10, 64)
+	id, error := NewPathVariable(r).uint64("id")
 	if error != nil {
 		response.Error(w, http.StatusBadRequest, error)
 		return
@@ -65,9 +60,7 @@ func FindUserByID(w http.ResponseWriter, r *http.Request) {
 }
 
 func DeleteUserByID(w http.ResponseWriter, r *http.Request) {
-	parameters := mux.Vars(r)
-
-	id, error := strconv.ParseUint(parameters["id"], 10, 64)
+	id, error := NewPathVariable(r).uint64("id")
 	if error != nil {
 		response.Error(w, http.StatusBadRequest, error)
 		return
@@ -135,9 +128,7 @@ func UpdateUserByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	parameters := mux.Vars(r)
-
-	id, error := strconv.ParseUint(parameters["id"], 10, 64)
+	id, error := NewPathVariable(r).uint64("id")
 	if error != nil {
 		response.Error(w, http.StatusBadRequest, error)
 		return
@@ -166,9 +157,7 @@ func UpdateUserByID(w http.ResponseWriter, r *http.Request) {
 }
 
 func FollowUser(w http.ResponseWriter, r *http.Request) {
-	parameters := mux.Vars(r)
-
-	id, error := strconv.ParseUint(parameters["id"], 10, 64)
+	id, error := NewPathVariable(r).uint64("id")
 	if error != nil {
 		response.Error(w, http.StatusBadRequest, error)
 		return
@@ -198,6 +187,62 @@ func FollowUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response.JSON(w, http.StatusNoContent, nil)
+}
+
+func UnfollowUser(w http.ResponseWriter, r *http.Request) {
+	id, error := NewPathVariable(r).uint64("id")
+	if error != nil {
+		response.Error(w, http.StatusBadRequest, error)
+		return
+	}
+
+	tokenUserId, error := auth.GetUserId(GetAuthorizationHeader(r))
+	if error != nil {
+		response.Error(w, http.StatusUnauthorized, error)
+		return
+	}
+
+	if id == tokenUserId {
+		response.Error(w, http.StatusForbidden, errors.New("an user cannot be unfollowed by himself"))
+		return
+	}
+
+	db, error := database.Connect()
+	if error != nil {
+		response.Error(w, http.StatusInternalServerError, error)
+		return
+	}
+	defer db.Close()
+
+	if error := repository.NewUserRepository(db).Unfollow(id, tokenUserId); error != nil {
+		response.Error(w, http.StatusInternalServerError, error)
+		return
+	}
+
+	response.JSON(w, http.StatusNoContent, nil)
+}
+
+func FindAllFollowersById(w http.ResponseWriter, r *http.Request) {
+	id, error := NewPathVariable(r).uint64("id")
+	if error != nil {
+		response.Error(w, http.StatusBadRequest, error)
+		return
+	}
+
+	db, error := database.Connect()
+	if error != nil {
+		response.Error(w, http.StatusInternalServerError, error)
+		return
+	}
+	defer db.Close()
+
+	followers, error := repository.NewUserRepository(db).FindAllFollowersById(id)
+	if error != nil {
+		response.Error(w, http.StatusInternalServerError, error)
+		return
+	}
+
+	response.JSON(w, http.StatusOK, followers)
 }
 
 func isSameUserFromAuthorization(userId uint64, r *http.Request) error {

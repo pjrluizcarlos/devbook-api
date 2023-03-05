@@ -146,6 +146,41 @@ func (r User) Follow(followed_id uint64, follower_id uint64) error {
 	return nil
 }
 
+func (r User) Unfollow(unfollowed_id uint64, unfollower_id uint64) error {
+	statement, error := r.db.Prepare("delete from follower where user_id = ? and follower_id = ?")
+	if error != nil {
+		return error
+	}
+	defer statement.Close()
+
+	if _, error = statement.Exec(unfollowed_id, unfollower_id); error != nil {
+		return error
+	}
+
+	return nil
+}
+
+func (r User) FindAllFollowersById(userId uint64) ([]model.User, error) {
+	rows, error := r.db.Query("select u.id, u.name, u.nick, u.email, u.password, u.created_at from follower f inner join user u on (f.follower_id = u.id) where f.user_id = ?", userId)
+	if error != nil {
+		return nil, error
+	}
+
+	var users []model.User
+
+	for rows.Next() {
+		var user model.User
+
+		if error := rows.Scan(&user.Id, &user.Name, &user.Nick, &user.Email, &user.Password, &user.CreatedAt); error != nil {
+			return nil, error
+		}
+
+		users = append(users, user)
+	}
+
+	return users, nil
+}
+
 func scan(rows *sql.Rows, user *model.User) error {
 	return rows.Scan(&user.Id, &user.Name, &user.Nick, &user.Email, &user.Password, &user.CreatedAt)
 }
