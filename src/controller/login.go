@@ -10,7 +10,7 @@ import (
 )
 
 func Login(w http.ResponseWriter, r *http.Request) {
-	user, error := requestBody(r)
+	user, error := toUserRequestBody(r)
 	if error != nil {
 		response.Error(w, http.StatusBadRequest, error)
 		return

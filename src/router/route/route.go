@@ -16,7 +16,11 @@ type Route struct {
 }
 
 func AddRoutes(r *mux.Router) *mux.Router {
-	routes := append(userRoutes, loginRoute)
+	var routes []Route
+
+	routes = append(routes, userRoutes...)
+	routes = append(routes, postRoutes...)
+	routes = append(routes, loginRoute)
 
 	fmt.Println("Routes creation started.")
 

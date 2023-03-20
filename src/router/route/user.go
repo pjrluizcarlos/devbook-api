@@ -63,4 +63,10 @@ var userRoutes = []Route{
 		Handler:         controller.FindAllFollowingById,
 		IsAuthenticated: true,
 	},
+	{
+		URI:             userResourceByID + "/update-password",
+		Method:          http.MethodPost,
+		Handler:         controller.UpdatePasswordById,
+		IsAuthenticated: true,
+	},
 }

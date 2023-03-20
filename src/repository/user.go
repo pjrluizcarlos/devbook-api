@@ -204,6 +204,38 @@ func (r User) FindAllFollowingById(userId uint64) ([]model.User, error) {
 	return users, nil
 }
 
+func (r User) FindPasswordById(userId uint64) (string, error) {
+	rows, error := r.db.Query("select password from user where id = ?", userId)
+	if error != nil {
+		return "", error
+	}
+	defer rows.Close()
+
+	var user model.User
+
+	if rows.Next() {
+		if error = rows.Scan(&user.Password); error != nil {
+			return "", error
+		}
+	}
+
+	return user.Password, nil
+}
+
+func (r User) UpdatePasswordById(userId uint64, password string) error {
+	statement, error := r.db.Prepare("update user set password = ? where id = ?")
+	if error != nil {
+		return error
+	}
+	defer statement.Close()
+
+	if _, error := statement.Exec(password, userId); error != nil {
+		return error
+	}
+
+	return nil
+}
+
 func scan(rows *sql.Rows, user *model.User) error {
 	return rows.Scan(&user.Id, &user.Name, &user.Nick, &user.Email, &user.Password, &user.CreatedAt)
 }

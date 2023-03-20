@@ -6,6 +6,7 @@ import (
 	"devbook-api/src/model"
 	"devbook-api/src/repository"
 	"devbook-api/src/response"
+	"devbook-api/src/security"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -87,7 +88,7 @@ func DeleteUserByID(w http.ResponseWriter, r *http.Request) {
 }
 
 func CreateUser(w http.ResponseWriter, r *http.Request) {
-	user, error := requestBody(r)
+	user, error := toUserRequestBody(r)
 	if error != nil {
 		response.Error(w, http.StatusBadRequest, error)
 		return
@@ -117,7 +118,7 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func UpdateUserByID(w http.ResponseWriter, r *http.Request) {
-	user, error := requestBody(r)
+	user, error := toUserRequestBody(r)
 	if error != nil {
 		response.Error(w, http.StatusBadRequest, error)
 		return
@@ -268,6 +269,64 @@ func FindAllFollowingById(w http.ResponseWriter, r *http.Request) {
 	response.JSON(w, http.StatusOK, following)
 }
 
+func UpdatePasswordById(w http.ResponseWriter, r *http.Request) {
+	id, error := NewPathVariable(r).uint64("id")
+	if error != nil {
+		response.Error(w, http.StatusBadRequest, error)
+		return
+	}
+
+	password, error := toPasswordRequestBody(r)
+	if error != nil {
+		response.Error(w, http.StatusBadRequest, error)
+		return
+	}
+
+	tokenUserId, error := auth.GetUserId(GetAuthorizationHeader(r))
+	if error != nil {
+		response.Error(w, http.StatusUnauthorized, error)
+		return
+	}
+
+	if id != tokenUserId {
+		response.Error(w, http.StatusForbidden, errors.New("an user cannot change password that is not yours"))
+		return
+	}
+
+	db, error := database.Connect()
+	if error != nil {
+		response.Error(w, http.StatusInternalServerError, error)
+		return
+	}
+	defer db.Close()
+
+	repository := repository.NewUserRepository(db)
+
+	oldPasswordHash, error := repository.FindPasswordById(id)
+	if error != nil {
+		response.Error(w, http.StatusInternalServerError, error)
+		return
+	}
+
+	if error = security.Compare(oldPasswordHash, password.Old); error != nil {
+		response.Error(w, http.StatusForbidden, error)
+		return
+	}
+
+	newPasswordHash, error := security.Hash(password.New)
+	if error != nil {
+		response.Error(w, http.StatusInternalServerError, error)
+		return
+	}
+
+	if error = repository.UpdatePasswordById(id, string(newPasswordHash)); error != nil {
+		response.Error(w, http.StatusInternalServerError, error)
+		return
+	}
+
+	response.JSON(w, http.StatusNoContent, nil)
+}
+
 func isSameUserFromAuthorization(userId uint64, r *http.Request) error {
 	tokenUserId, error := auth.GetUserId(GetAuthorizationHeader(r))
 	if error != nil {
@@ -281,7 +340,7 @@ func isSameUserFromAuthorization(userId uint64, r *http.Request) error {
 	return nil
 }
 
-func requestBody(r *http.Request) (model.User, error) {
+func toUserRequestBody(r *http.Request) (model.User, error) {
 	requestBody, error := getRequestBody(r)
 	if error != nil {
 		return model.User{}, error
@@ -294,4 +353,19 @@ func requestBody(r *http.Request) (model.User, error) {
 	}
 
 	return user, nil
+}
+
+func toPasswordRequestBody(r *http.Request) (model.Password, error) {
+	requestBody, error := getRequestBody(r)
+	if error != nil {
+		return model.Password{}, error
+	}
+
+	var password model.Password
+
+	if error = json.Unmarshal(requestBody, &password); error != nil {
+		return model.Password{}, error
+	}
+
+	return password, nil
 }
